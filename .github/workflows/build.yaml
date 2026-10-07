@@ -1,0 +1,35 @@
+name: build
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Set up ko
+        uses: ko-build/setup-ko@v0.10
+
+      - name: Build and push
+        env:
+          IMAGE_SOURCE: https://github.com/${{ github.repository }}
+        run: |
+          ko build . --bare --tags latest --image-label "org.opencontainers.image.source=${IMAGE_SOURCE}"
