@@ -55,7 +55,7 @@ func run() error {
 		}
 
 		if err := r.ParseForm(); err != nil {
-			writeError(w, http.StatusBadRequest, "ValidationError", "invalid form parameters", "Sender")
+			writeError(w, http.StatusBadRequest, "ValidationError", "invalid form parameters: "+err.Error(), "Sender")
 			return
 		}
 
@@ -66,7 +66,7 @@ func run() error {
 
 		claims, err := verifier.Verify(r.Context(), r.Form.Get("WebIdentityToken"))
 		if err != nil {
-			writeError(w, http.StatusBadRequest, "InvalidIdentityToken", "web identity token is invalid", "Sender")
+			writeError(w, http.StatusBadRequest, "InvalidIdentityToken", "web identity token is invalid: "+err.Error(), "Sender")
 			return
 		}
 
