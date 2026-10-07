@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/xml"
 	"flag"
 	"log/slog"
@@ -33,12 +32,6 @@ func run() error {
 	secretAccessKey := flag.String("secret-access-key", "", "AWS secret access key")
 	flag.Parse()
 
-	provider, err := oidc.NewProvider(context.Background(), *issuerURL)
-	if err != nil {
-		return err
-	}
-	verifier := provider.Verifier(&oidc.Config{ClientID: *audience})
-
 	slog.Info("sts-mock listening", "addr", *addr)
 	return http.ListenAndServe(*addr, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -63,6 +56,13 @@ func run() error {
 			writeError(w, http.StatusBadRequest, "InvalidAction", "unsupported Action", "Sender")
 			return
 		}
+
+		provider, err := oidc.NewProvider(r.Context(), *issuerURL)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "InvalidIssuer", "failed to create OIDC provider: "+err.Error(), "Sender")
+			return
+		}
+		verifier := provider.Verifier(&oidc.Config{ClientID: *audience})
 
 		claims, err := verifier.Verify(r.Context(), r.Form.Get("WebIdentityToken"))
 		if err != nil {
